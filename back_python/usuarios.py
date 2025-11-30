@@ -98,3 +98,6 @@ def deletar_usuario_completo(id_usuario):
         print(f"Usuário {id_usuario} e todos os seus dados foram deletados.")
         return True
         
+    except Exception as e:
+        print(f"Erro ao deletar usuário: {e}")
+        return False
