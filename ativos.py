@@ -27,7 +27,45 @@ def get_ativo_by_id(id_ativo):
     db.close()
     
     return ativo
+    
+def get_or_create_ativo_manual(nome, tipo, perfil_alvo):
+    db = sqlite3.connect(database.DB_NOME)
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
 
+    sql_find = "SELECT * FROM ativos WHERE nome = ? AND tipo = ?"
+    cursor.execute(sql_find, (nome, tipo))
+    ativo_existente = cursor.fetchone()
+    
+    if ativo_existente:
+        db.close()
+        return ativo_existente['id']
+
+    try:
+        rendimento_ano = "N/A (calculado na carteira)"
+        valor_min_float = 0.0
+        prazo_saque = "N/A"
+        corretora = "Usuário"
+    
+        sql_insert = """
+        INSERT INTO ativos (nome, ticker, tipo, perfil_alvo, rendimento_ultimo_ano, valor_minimo, prazo_saque, banco_corretora)
+        VALUES (?, NULL, ?, ?, ?, ?, ?, ?)
+        """
+        
+        cursor.execute(sql_insert, (nome, tipo, perfil_alvo, rendimento_ano, valor_min_float, prazo_saque, corretora))
+        
+        id_novo = cursor.lastrowid
+        
+        db.commit()
+        db.close()
+        
+        return id_novo
+        
+    except Exception as e:
+        db.close()
+        print(f"Erro ao criar ativo manual: {e}")
+        return None
+    
 def get_or_create_ativo_by_ticker(ticker_simbolo):
     db = sqlite3.connect(database.DB_NOME)
     db.row_factory = sqlite3.Row
