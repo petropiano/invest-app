@@ -1,6 +1,6 @@
 import sqlite3
 import database
-from werkzeug.security import generate_password_hash, check_password_hash 
+from werkzeug.security import generate_password_hash, check_password_hash
 
 def cadastrar_usuario(nome_digitado, email_digitado, senha_digitada):
     nome = nome_digitado.strip().capitalize()
@@ -41,7 +41,7 @@ def login(email_digitado, senha_digitada):
     
     try:
         db = sqlite3.connect(database.DB_NOME)
-        db.row_factory = sqlite3.Row 
+        db.row_factory = sqlite3.Row
         cursor = db.cursor()
         
         login_sql = "SELECT * FROM usuarios WHERE email = ?"
@@ -56,5 +56,25 @@ def login(email_digitado, senha_digitada):
         return None
         
     except Exception as e:
-        print(f"Erro no login: {e}")
         return None
+
+def atualizar_perfil(id_usuario, novo_perfil):
+    try:
+        db = sqlite3.connect(database.DB_NOME)
+        cursor = db.cursor()
+        
+        sql_update = """
+        UPDATE usuarios
+        SET perfil = ?
+        WHERE id = ?
+        """
+        
+        cursor.execute(sql_update, (novo_perfil, id_usuario))
+        
+        db.commit()
+        db.close()
+        
+        return True
+        
+    except Exception as e:
+        return False
