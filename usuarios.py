@@ -78,3 +78,21 @@ def atualizar_perfil(id_usuario, novo_perfil):
         
     except Exception as e:
         return False
+
+def deletar_usuario_completo(id_usuario):
+    try:
+        db = sqlite3.connect(database.DB_NOME)
+        cursor = db.cursor()
+        
+        cursor.execute("DELETE FROM posicoes WHERE id_usuario = ?", (id_usuario,))
+        
+        cursor.execute("DELETE FROM metas WHERE id_usuario = ?", (id_usuario,))
+        
+        cursor.execute("DELETE FROM usuarios WHERE id = ?", (id_usuario,))
+        
+        db.commit()
+        db.close()
+        return True
+        
+    except Exception as e:
+        return False
