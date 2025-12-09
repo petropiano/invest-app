@@ -1,0 +1,4 @@
+﻿Flask==3.1.2
+matplotlib==3.10.7
+requests==2.32.5
+yfinance==0.2.66
