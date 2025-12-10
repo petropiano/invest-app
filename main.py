@@ -1,5 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import database
+import usuarios
+import buscador
+import ativos
 import usuarios 
 
 app = Flask(__name__, static_folder='static')
@@ -22,6 +25,7 @@ def rota_cadastro():
             flash(f"Bem-vindo, {nome}! Faça login para continuar.", "success")
             return redirect(url_for("rota_login"))
         else:
+            flash("Erro ao cadastrar.", "error")
             flash("Erro ao cadastrar: e-mail inválido ou já em uso.", "error")
     return render_template("cadastro.html")
 
@@ -56,6 +60,10 @@ def rota_quiz():
         pontuacao = 0
         for i in range(1, 6):
             resposta = request.form.get(f'p{i}')
+            if resposta: pontuacao += int(resposta)
+        perfil = "Conservador"
+        if pontuacao >= 12: perfil = "Arrojado"
+        elif pontuacao >= 9: perfil = "Moderado"
             if resposta:
                 pontuacao += int(resposta)
         
@@ -74,6 +82,39 @@ def rota_quiz():
 
 @app.route("/deletar_conta")
 def rota_deletar_conta():
+    if 'id_usuario' not in session: return redirect(url_for('rota_login'))
+    if usuarios.deletar_usuario_completo(session['id_usuario']):
+        session.clear()
+        flash("Conta excluída.", "info")
+        return redirect(url_for("homepage"))
+    else:
+        flash("Erro ao excluir.", "error")
+        return redirect(url_for("dashboard"))
+
+@app.route("/acoes", methods=["GET", "POST"])
+def rota_acoes():
+    resultados = []
+    termo = ""
+    if request.method == "POST":
+        termo = request.form.get('termo', '')
+        resultados = buscador.buscar_ticker_por_nome(termo)
+    else:
+        resultados = buscador.get_todos_os_tickers()
+    return render_template("acoes.html", resultados=resultados, termo=termo)
+
+@app.route("/acao/<ticker>", methods=["GET", "POST"])
+def rota_acao_detalhe(ticker):
+    if 'id_usuario' not in session:
+        return redirect(url_for('rota_login'))
+
+    ativo = ativos.get_or_create_ativo_by_ticker(ticker)
+    
+    if not ativo:
+        flash(f"Dados não encontrados para {ticker}", "error")
+        return redirect(url_for('rota_acoes'))
+    
+    return render_template("acao_detalhe.html", ativo=ativo)
+
     if 'id_usuario' not in session:
         return redirect(url_for('rota_login'))
     
