@@ -26,6 +26,13 @@ def rota_cadastro():
             return redirect(url_for("rota_login"))
         else:
             flash("Erro ao cadastrar.", "error")
+        
+        if usuarios.cadastrar_usuario(nome, email, senha):
+            flash(f"Bem-vindo, {nome}! Faça login para continuar.", "success")
+            return redirect(url_for("rota_login"))
+        else:
+            flash("Erro ao cadastrar.", "error")
+            flash("Erro ao cadastrar: e-mail inválido ou já em uso.", "error")
     return render_template("cadastro.html")
 
 @app.route("/login", methods=["GET", "POST"])
