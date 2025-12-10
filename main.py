@@ -5,6 +5,7 @@ import buscador
 import ativos
 import carteira
 import calculadora
+import gerador_grafico
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = "fP$92wK@z_qXv*8jN"
@@ -26,13 +27,6 @@ def rota_cadastro():
             return redirect(url_for("rota_login"))
         else:
             flash("Erro ao cadastrar.", "error")
-        
-        if usuarios.cadastrar_usuario(nome, email, senha):
-            flash(f"Bem-vindo, {nome}! Faça login para continuar.", "success")
-            return redirect(url_for("rota_login"))
-        else:
-            flash("Erro ao cadastrar.", "error")
-            flash("Erro ao cadastrar: e-mail inválido ou já em uso.", "error")
     return render_template("cadastro.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -118,7 +112,8 @@ def rota_acao_detalhe(ticker):
         flash("Investimento adicionado!", "success")
         return redirect(url_for('rota_carteira'))
     
-    return render_template("acao_detalhe.html", ativo=ativo)
+    caminho_grafico = gerador_grafico.gerar_grafico_anual(ticker)
+    return render_template("acao_detalhe.html", ativo=ativo, grafico=caminho_grafico)
 
 @app.route("/adicionar_renda_fixa", methods=["GET", "POST"])
 def rota_adicionar_renda_fixa():
