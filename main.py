@@ -3,6 +3,7 @@ import database
 import usuarios
 import buscador
 import ativos
+import usuarios 
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = "fP$92wK@z_qXv*8jN"
@@ -19,11 +20,13 @@ def rota_cadastro():
         nome = request.form['nome']
         email = request.form['email']
         senha = request.form['senha']
+        
         if usuarios.cadastrar_usuario(nome, email, senha):
             flash(f"Bem-vindo, {nome}! Faça login para continuar.", "success")
             return redirect(url_for("rota_login"))
         else:
             flash("Erro ao cadastrar.", "error")
+            flash("Erro ao cadastrar: e-mail inválido ou já em uso.", "error")
     return render_template("cadastro.html")
 
 @app.route("/login", methods=["GET", "POST"])
@@ -31,6 +34,7 @@ def rota_login():
     if request.method == "POST":
         email = request.form['email']
         senha = request.form['senha']
+        
         usuario = usuarios.login(email, senha)
         if usuario:
             session['id_usuario'] = usuario['id']
@@ -51,6 +55,7 @@ def rota_logout():
 def rota_quiz():
     if 'id_usuario' not in session:
         return redirect(url_for('rota_login'))
+        
     if request.method == "POST":
         pontuacao = 0
         for i in range(1, 6):
@@ -59,10 +64,20 @@ def rota_quiz():
         perfil = "Conservador"
         if pontuacao >= 12: perfil = "Arrojado"
         elif pontuacao >= 9: perfil = "Moderado"
+            if resposta:
+                pontuacao += int(resposta)
+        
+        perfil = "Conservador"
+        if pontuacao >= 12:
+            perfil = "Arrojado"
+        elif pontuacao >= 9:
+            perfil = "Moderado"
+            
         usuarios.atualizar_perfil(session['id_usuario'], perfil)
         session['perfil_usuario'] = perfil
         flash(f"Seu perfil foi definido como: {perfil}", "success")
         return redirect(url_for("dashboard"))
+        
     return render_template("quiz.html")
 
 @app.route("/deletar_conta")
@@ -99,6 +114,18 @@ def rota_acao_detalhe(ticker):
         return redirect(url_for('rota_acoes'))
     
     return render_template("acao_detalhe.html", ativo=ativo)
+
+    if 'id_usuario' not in session:
+        return redirect(url_for('rota_login'))
+    
+    id_usuario = session['id_usuario']
+    if usuarios.deletar_usuario_completo(id_usuario):
+        session.clear()
+        flash("Sua conta e todos os dados foram excluídos.", "info")
+        return redirect(url_for("homepage"))
+    else:
+        flash("Erro ao excluir conta.", "error")
+        return redirect(url_for("dashboard"))
 
 if __name__ == "__main__":
     app.run(debug=True)
