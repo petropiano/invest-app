@@ -1,18 +1,30 @@
 import sqlite3
 import database
+import ativos
 
-def adicionar_posicao(id_usuario, id_ativo, valor_investido, data_compra, tipo_rendimento=None, taxa=0.0):
+def adicionar_posicao(id_usuario_logado, id_ativo_comprado, valor_investido, data_compra, tipo_rendimento, taxa):
     try:
-        if not id_usuario or not id_ativo:
-            return False
+        valor_final = float(valor_investido)
+        id_user_final = int(id_usuario_logado)
+        id_ativo_final = int(id_ativo_comprado)
+        
+        if taxa and taxa != '':
+            taxa_final = float(taxa)
+        else:
+            taxa_final = None
             
-        valor_float = float(valor_investido)
-        if valor_float <= 0:
-            return False
-            
-        if not data_compra:
-            return False
+    except ValueError:
+        print("[ERRO] Valor ou taxa não são números válidos.")
+        return False
+    
+    if not data_compra:
+        print("[ERRO] Data não pode ser vazia.")
+        return False
 
+    if not tipo_rendimento:
+        tipo_rendimento = None
+
+    try:
         db = sqlite3.connect(database.DB_NOME)
         cursor = db.cursor()
         
@@ -21,75 +33,80 @@ def adicionar_posicao(id_usuario, id_ativo, valor_investido, data_compra, tipo_r
         VALUES (?, ?, ?, ?, ?, ?)
         """
         
-        cursor.execute(sql_insert, (id_usuario, id_ativo, valor_float, data_compra, tipo_rendimento, taxa))
+        cursor.execute(sql_insert, (id_user_final, id_ativo_final, valor_final, data_compra, tipo_rendimento, taxa_final))
         
         db.commit()
         db.close()
         
+        print("[SUCESSO] Ativo adicionado à carteira!")
         return True
-
-    except Exception:
+        
+    except Exception as e:
+        print(f"[ERRO] Não foi possível adicionar o ativo: {e}")
+        return False
+          
+def deletar_posicao_web(id_posicao, id_usuario_logado):
+    
+    try:
+        db = sqlite3.connect(database.DB_NOME)
+        cursor = db.cursor()
+        sql_delete = "DELETE FROM posicoes WHERE id = ? AND id_usuario = ?"
+        
+        cursor.execute(sql_delete, (id_posicao, id_usuario_logado))
+        
+        if cursor.rowcount == 0:
+            print("Falha ao deletar: Posição não encontrada ou não pertence ao usuário.")
+            db.close()
+            return False
+        else:
+            db.commit()
+            db.close()
+            print("Sucesso: Posição deletada.")
+            return True
+            
+    except Exception as e:
+        print(f"Erro ao deletar posição: {e}")
         return False
 
-def get_posicao_por_id(id_posicao):
-    try:
-        db = sqlite3.connect(database.DB_NOME)
-        db.row_factory = sqlite3.Row
-        cursor = db.cursor()
-        
-        sql = "SELECT * FROM posicoes WHERE id = ?"
-        cursor.execute(sql, (id_posicao,))
-        posicao = cursor.fetchone()
-        
-        db.close()
-        return posicao
-    except Exception:
-        return None
+def get_posicao_por_id(id_posicao, id_usuario):
+    db = sqlite3.connect(database.DB_NOME)
+    db.row_factory = sqlite3.Row
+    cursor = db.cursor()
+    
+    sql = """
+    SELECT posicoes.*, ativos.nome, ativos.tipo 
+    FROM posicoes 
+    JOIN ativos ON posicoes.id_ativo = ativos.id
+    WHERE posicoes.id = ? AND posicoes.id_usuario = ?
+    """
+    cursor.execute(sql, (id_posicao, id_usuario))
+    posicao = cursor.fetchone()
+    db.close()
+    return posicao
 
-def editar_posicao(id_posicao, novo_valor, nova_data):
+def editar_posicao(id_posicao, id_usuario, valor_investido, data_compra):
     try:
-        valor_float = float(novo_valor)
-        if valor_float <= 0 or not nova_data:
-            return False
-            
+        val_final = float(valor_investido)
+        
         db = sqlite3.connect(database.DB_NOME)
         cursor = db.cursor()
         
-        sql_update = """
-        UPDATE posicoes
+        sql = """
+        UPDATE posicoes 
         SET valor_investido = ?, data_compra = ?
-        WHERE id = ?
+        WHERE id = ? AND id_usuario = ?
         """
         
-        cursor.execute(sql_update, (valor_float, nova_data, id_posicao))
-        db.commit()
-        db.close()
-        return True
-    except Exception:
-        return False
-
-def deletar_posicao_web(id_posicao, id_usuario_requisitante):
-    try:
-        db = sqlite3.connect(database.DB_NOME)
-        cursor = db.cursor()
+        cursor.execute(sql, (val_final, data_compra, id_posicao, id_usuario))
         
-        cursor.execute("SELECT id_usuario FROM posicoes WHERE id = ?", (id_posicao,))
-        resultado = cursor.fetchone()
-        
-        if not resultado:
+        if cursor.rowcount == 0:
             db.close()
             return False
             
-        dono_da_posicao = resultado[0]
-        
-        if dono_da_posicao != id_usuario_requisitante:
-            db.close()
-            return False
-            
-        cursor.execute("DELETE FROM posicoes WHERE id = ?", (id_posicao,))
         db.commit()
         db.close()
         return True
         
-    except Exception:
+    except Exception as e:
+        print(f"Erro ao editar posição: {e}")
         return False
