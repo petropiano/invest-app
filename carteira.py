@@ -1,7 +1,7 @@
 import sqlite3
 import database
 
-def adicionar_posicao(id_usuario, id_ativo, valor_investido, data_compra):
+def adicionar_posicao(id_usuario, id_ativo, valor_investido, data_compra, tipo_rendimento=None, taxa=0.0):
     try:
         if not id_usuario or not id_ativo:
             return False
@@ -17,11 +17,11 @@ def adicionar_posicao(id_usuario, id_ativo, valor_investido, data_compra):
         cursor = db.cursor()
         
         sql_insert = """
-        INSERT INTO posicoes (id_usuario, id_ativo, valor_investido, data_compra)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO posicoes (id_usuario, id_ativo, valor_investido, data_compra, tipo_rendimento, taxa)
+        VALUES (?, ?, ?, ?, ?, ?)
         """
         
-        cursor.execute(sql_insert, (id_usuario, id_ativo, valor_float, data_compra))
+        cursor.execute(sql_insert, (id_usuario, id_ativo, valor_float, data_compra, tipo_rendimento, taxa))
         
         db.commit()
         db.close()
