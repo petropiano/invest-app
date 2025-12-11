@@ -3,6 +3,7 @@ import database
 from werkzeug.security import generate_password_hash, check_password_hash
 
 def cadastrar_usuario(nome_digitado, email_digitado, senha_digitada):
+
     nome = nome_digitado.strip().capitalize()
     email = email_digitado.strip().lower()
     
@@ -56,6 +57,7 @@ def login(email_digitado, senha_digitada):
         return None
         
     except Exception as e:
+        print(f"Erro no login: {e}")
         return None
 
 def atualizar_perfil(id_usuario, novo_perfil):
@@ -77,6 +79,7 @@ def atualizar_perfil(id_usuario, novo_perfil):
         return True
         
     except Exception as e:
+        print(f"[ERRO] Não foi possível atualizar o perfil: {e}")
         return False
 
 def deletar_usuario_completo(id_usuario):
@@ -92,7 +95,9 @@ def deletar_usuario_completo(id_usuario):
         
         db.commit()
         db.close()
+        print(f"Usuário {id_usuario} e todos os seus dados foram deletados.")
         return True
         
     except Exception as e:
+        print(f"Erro ao deletar usuário: {e}")
         return False
